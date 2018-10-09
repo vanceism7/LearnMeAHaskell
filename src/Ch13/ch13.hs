@@ -3,6 +3,7 @@
 import Control.Monad
 import Control.Applicative
 import Data.Monoid
+import Data.Maybe
 
 applyLog :: (Monoid m) => (a,m) -> (a -> (b,m)) -> (b,m)
 applyLog (val,m) f =
@@ -25,11 +26,52 @@ instance (Monoid w) => Monad (Writer w) where
     let Writer (val,m) = f a
     in Writer (val, b <> m)
 
+tell :: [String] -> Writer [String] ()
+tell s = Writer ((), s)
 
-addStuff a b = Writer (a+b,["Added " ++ show a ++ " and " ++ show b])
-multStuff a b = Writer (a*b, ["Multiplied " ++ show a ++ " by " ++ show b])
-squareStuff a = Writer (a**2, ["Squared " ++ show a])
+addStuff a b = let r = a+b in
+  Writer (r,["Added " ++ show a ++ " and " ++ show b ++ " gives " ++ show r])
+
+multStuff a b = let r = a*b in
+  Writer (r, ["Multiplied " ++ show a ++ " by " ++ show b ++ " gives " ++ show r])
+
+squareStuff a = let r = a**2 in
+  Writer (r, ["Squared " ++ show a ++ " gives " ++ show r])
 
 
 doStuff =
   Writer (10, ["How did we do it?"]) >>= addStuff 5 >>= multStuff 5 >>= squareStuff
+
+doStuff2 :: (Show a, Floating a) => Writer [String] a
+doStuff2 = do
+  a <- Writer (10, ["How did we do it again??"])
+  b <- addStuff 5 a
+  c <- multStuff 5 b
+  d <- squareStuff c
+  tell ["Thats how we do it!"]
+  return d
+
+doStuff3 :: (Show a, Floating a) => Writer [String] a
+doStuff3 = do
+  let doIt a = addStuff 5 a >>= multStuff 5 >>= squareStuff
+  a <- Writer (10, ["How do we do this again!? I got bad memory!"])
+  result <- doIt a
+  tell ["Dont forget anymore!"]
+  return result
+
+
+----------------
+-- GCD Logger
+------
+
+gcd' :: Int -> Int -> Writer [String] Int
+gcd' a b
+  | b == 0 = do
+      tell ["b is 0, found gcd: " ++ show a]
+      return a
+
+  | otherwise = do
+      tell ["Calling gcd' with " ++ show b ++ " and (" ++ show a ++ " mod " ++ show b ++ ")"]
+      gcd' b (a `mod` b)
+
+
