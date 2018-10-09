@@ -26,7 +26,7 @@ instance (Monoid w) => Monad (Writer w) where
     let Writer (val,m) = f a
     in Writer (val, b <> m)
 
-tell :: [String] -> Writer [String] ()
+tell :: a -> Writer a ()
 tell s = Writer ((), s)
 
 addStuff a b = let r = a+b in
@@ -75,3 +75,34 @@ gcd' a b
       gcd' b (a `mod` b)
 
 
+------------------------
+-- Difference Lists
+------------
+
+newtype DiffList a = DiffList { getList :: [a] -> [a] }
+
+newDiffList :: [a] -> DiffList a
+newDiffList xs = DiffList (xs++)
+
+instance Semigroup (DiffList a) where
+  DiffList a <> DiffList b = DiffList ( a . b )
+
+instance Monoid (DiffList a) where
+  mempty = DiffList ([]++)
+
+
+gcd2' :: Int -> Int -> Writer (DiffList String) Int
+gcd2' a b
+  | b == 0 = do
+      tell $ newDiffList ["The answer is: " ++ show a ++ "!"]
+      return a
+
+  | otherwise = do
+      let r = a `mod` b
+      tell $ newDiffList [show a ++ " mod " ++ show b ++ " = " ++ show r]
+      gcd2' b r
+
+gcd3' a b =
+  let x = getList $ snd $ (\x -> let Writer(a,b) = x in (a,b)) $ gcd2' a b
+  in
+    x []
