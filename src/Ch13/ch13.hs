@@ -4,6 +4,7 @@ import Control.Monad
 import Control.Applicative
 import Data.Monoid
 import Data.Maybe
+import System.Random
 
 applyLog :: (Monoid m) => (a,m) -> (a -> (b,m)) -> (b,m)
 applyLog (val,m) f =
@@ -106,3 +107,107 @@ gcd3' a b =
   let x = getList $ snd $ (\x -> let Writer(a,b) = x in (a,b)) $ gcd2' a b
   in
     x []
+
+-------------
+-- Reader
+-----
+
+addStuff2 :: Int -> Int
+addStuff2 = do
+  a <- (*5)
+  b <- (+10)
+  return (a+b)
+
+------------------
+-- Testing Stuff
+--------
+
+maybeDoStuff :: Int -> Maybe String
+maybeDoStuff x = do
+  let getMsg = (\m -> if m >= 20 then Just "Hello" else Nothing)
+  msg <- getMsg x
+  return (msg ++ " friend!")
+
+------------------
+-- State Monad
+---------
+
+type Stack a = [a]
+
+-- Plain Stack (Non Monadic)
+push :: a -> Stack a -> ( (), Stack a )
+push item xs = ((), item : xs)
+
+pop :: Stack a -> (a, Stack a)
+pop (x:xs) = (x,xs)
+
+stackManip :: Stack Int -> (Int, Stack Int)
+stackManip stack =
+  let (v,s) = push 3 stack
+      (v1,s1) = pop s
+  in
+    pop s1
+
+applyState :: (s -> (v,s)) -> (v1,s) -> (v,s)
+applyState f (v,s) =
+  let (a,b) = f s in (a,b)
+
+stackManip2 :: Stack Int -> (Int, Stack Int)
+stackManip2 stack =
+  let r1 = push 3 stack
+      result = applyState (push 15) (applyState (push 10) (applyState (push 4) r1))
+  in
+    applyState pop result
+
+
+-- State Monadic Stack
+newtype State s a = State { runState :: s -> (a,s) }
+
+instance Functor (State s) where
+  fmap f (State s) = State $ \w -> let (a,b) = s w in (f a, b)
+
+instance Applicative (State s) where
+  pure x = State $ \s -> (x,s)
+  State f <*> State s =
+    State $ \w -> let (f1,s1) = f w
+                      (a,b) = s w
+                  in
+                    (f1 a, b)
+
+instance Monad (State s) where
+  return = pure
+  State st >>= f =
+    State $ \w ->
+              let (a,b) = st w
+                  State m = f a
+              in
+                m b
+
+
+pushs :: a -> State (Stack a) ()
+pushs item = State $ (\xs -> ((), item : xs))
+
+-- Gotta have em
+pops :: State (Stack a) a
+pops = State $ \(x:xs) -> (x,xs)
+
+
+stackManip3 :: State (Stack Int) Int
+stackManip3 = do
+  pushs 3
+  pushs 4
+  pushs 10
+  pops
+
+stackManip4 :: State (Stack Int) Int
+stackManip4 =
+  pushs 3 >> pushs 4 >> pushs 10 >> pops
+
+
+------------------
+-- Random State
+-------
+
+randomSt :: (RandomGen a, Random b ) => State a b
+randomSt = State random
+
