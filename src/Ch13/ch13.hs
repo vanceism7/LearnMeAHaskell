@@ -5,6 +5,7 @@ import Control.Applicative
 import Data.Monoid
 import Data.Maybe
 import System.Random
+import Data.Ratio
 
 applyLog :: (Monoid m) => (a,m) -> (a -> (b,m)) -> (b,m)
 applyLog (val,m) f =
@@ -211,3 +212,72 @@ stackManip4 =
 randomSt :: (RandomGen a, Random b ) => State a b
 randomSt = State random
 
+getRandoms :: State StdGen Bool
+getRandoms = do
+  a <- randomSt :: State StdGen Int
+  if a > 50
+    then return True
+    else return False
+
+----------------
+-- Funcs
+----
+
+justIt :: Int -> Maybe Int
+justIt x = Just x
+
+myfmap :: (a -> b) -> Maybe a -> Maybe b
+myfmap f Nothing = Nothing
+myfmap f (Just x) = Just (f x)
+
+
+-----------------
+-- Making Monads
+-------
+
+newtype Prob a = Prob { getProb :: [(a,Ratio Int)] } deriving (Show, Eq)
+
+instance Functor Prob where
+  fmap f (Prob a) = Prob $ fmap (\(x,y) -> (f x,y)) a
+
+instance Applicative Prob where
+  pure x = Prob [(x,1 % 1)]
+  Prob fs <*> Prob as =
+    let ans = fmap (\(x,y) -> fmap (\(f,z) -> (f x, z * y)) fs ) as
+    in Prob $ concat ans
+
+instance Monad Prob where
+  return = pure
+  Prob a >>= f =
+    let res = fmap (\(x,y) ->
+            let Prob mx = f x
+                result = fmap (\(w,z) -> (w, z * y)) mx
+            in result) a
+    in
+      Prob $ concat res
+
+makeDice :: Int -> Prob Int
+makeDice sides =
+    Prob $ foldr (\x acc -> (x, 1 % sides): acc) [] [1..sides]
+
+testProb :: Prob Int
+testProb =
+  let d1 = makeDice 4
+      d3 = makeDice 10
+  in
+    (+) <$> d1 <*> d3
+
+data Coin = Heads | Tails deriving (Show, Eq)
+
+coin :: Prob Coin
+coin = Prob [(Heads,1%2),(Tails,1%2)]
+
+cheatCoin :: Prob Coin
+cheatCoin = Prob [(Heads, 1%10), (Tails,9%10)]
+
+flipCoins :: Prob Bool
+flipCoins = do
+  a <- coin
+  b <- coin
+  c <- cheatCoin
+  return (all (==Tails) [a,b,c])
