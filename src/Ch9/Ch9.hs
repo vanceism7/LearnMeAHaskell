@@ -1,3 +1,5 @@
+module Ch9.Ch9 where
+
 import           Control.Exception
 import           Control.Monad
 import qualified Data.ByteString.Lazy as B
@@ -8,7 +10,7 @@ import qualified System.Environment   as Env
 import qualified System.IO            as IO
 import System.IO.Error
 
-main = do
+main1 = do
   -- Whatver stuff you want
   putStrLn "Program Start: "
   (src:dest:_) <- Env.getArgs

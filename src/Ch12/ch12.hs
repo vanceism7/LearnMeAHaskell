@@ -1,3 +1,5 @@
+module Ch12.Ch12 where
+
 -- Chapter 12
 import Control.Monad
 

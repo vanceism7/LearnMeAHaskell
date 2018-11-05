@@ -1,10 +1,12 @@
+module Ch13.Ch13 where
+
 -- Chapter 13
 
 import Control.Monad
 import Control.Applicative
 import Data.Monoid
 import Data.Maybe
-import System.Random
+-- import System.Random
 import Data.Ratio
 
 applyLog :: (Monoid m) => (a,m) -> (a -> (b,m)) -> (b,m)
@@ -209,15 +211,15 @@ stackManip4 =
 -- Random State
 -------
 
-randomSt :: (RandomGen a, Random b ) => State a b
-randomSt = State random
+-- randomSt :: (RandomGen a, Random b ) => State a b
+-- randomSt = State random
 
-getRandoms :: State StdGen Bool
-getRandoms = do
-  a <- randomSt :: State StdGen Int
-  if a > 50
-    then return True
-    else return False
+-- getRandoms :: State StdGen Bool
+-- getRandoms = do
+--   a <- randomSt :: State StdGen Int
+--   if a > 50
+--     then return True
+--     else return False
 
 ----------------
 -- Funcs
@@ -281,3 +283,35 @@ flipCoins = do
   b <- coin
   c <- cheatCoin
   return (all (==Tails) [a,b,c])
+
+-------------------------------
+-- Other stuff/tests
+------------------------------
+
+data MyType a = MakeIt { runMakeIt :: a } deriving (Show)
+
+newtype MaybeT m a = MaybeT { runMaybeT :: m (Maybe a) } 
+
+data Person = Person {
+    firstName :: String
+  , lastName :: String
+  , age :: Int
+  }
+
+
+--------------
+(>>>=) :: (a -> Maybe b) -> (Maybe a -> Maybe b)
+(>>>=) f x =
+  case x of
+    Just x -> f x
+    Nothing -> Nothing
+
+jdiv :: Int -> Int -> Maybe Int
+jdiv _ 0 = Nothing
+jdiv a b = Just $ a `div` b
+
+------------------
+funk :: Float -> Float -> Float
+funk a b =
+  (a**2) + (b**2)
+

@@ -1,3 +1,5 @@
+module Ch11.Ch11 where
+
 import Control.Monad
 import Control.Applicative
 import qualified Data.Foldable as F

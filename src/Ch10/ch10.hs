@@ -1,3 +1,4 @@
+module Ch10.Ch10 where
 -- Reverse Polish Notation Calculator
 
 import qualified Data.Char as Char

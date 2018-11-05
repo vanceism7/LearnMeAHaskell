@@ -1,4 +1,4 @@
-module Lib
+module Ch1To6
     ( someFunc,
       add,
     ) where

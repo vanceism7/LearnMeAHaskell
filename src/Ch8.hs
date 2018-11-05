@@ -1,3 +1,5 @@
+module Ch8 where
+
 import qualified Data.Map as Map
 import qualified Data.Either as Either
 

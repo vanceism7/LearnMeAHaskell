@@ -8,7 +8,6 @@ copyright:           "2018 Vance Palacio"
 
 extra-source-files:
 - README.md
-- ChangeLog.md
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
@@ -21,6 +20,10 @@ description:         Please see the README on GitHub at <https://github.com/vanc
 
 dependencies:
 - base >= 4.7 && < 5
+- mtl
+- containers
+- directory
+- bytestring
 
 library:
   source-dirs: src
