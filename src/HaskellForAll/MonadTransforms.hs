@@ -66,3 +66,34 @@ eval1 env (App e1 e2) = do
   val2 <- eval1 env e2
   case val1 of
     FunVal env' n body -> eval1 (Map.insert n val2 env') body
+
+----------------------
+-- Error Handling
+---------
+
+type Eval2 a = ExceptT String Identity a
+
+runEval2 :: Eval2 a -> Either String a
+runEval2 e = runIdentity $ runExceptT e
+
+eval2 :: Env -> Exp -> Eval2 Value
+eval2 env (Lit i) = return $ IntVal i
+eval2 env (Var n) =
+  case Map.lookup n env of
+    Just x -> return x
+    Nothing -> throwError $ "Unbound variable " ++ n
+
+eval2 env (Plus e1 e2) = do
+  i1 <- eval2 env e1
+  i2 <- eval2 env e2
+  case (i1,i2) of
+    (IntVal a, IntVal b) -> return $ IntVal(a+b)
+    otherwise -> throwError "Type error"
+
+eval2 env (Abs n e) = return $ FunVal env n e
+eval2 env (App e1 e2) = do
+  val1 <- eval2 env e1
+  val2 <- eval2 env e2
+  case val1 of
+    FunVal env' n body -> eval2 (Map.insert n val2 env') body
+    otherwise -> throwError "Type error: value is not a function"
